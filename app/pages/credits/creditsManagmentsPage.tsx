@@ -1,17 +1,7 @@
 import { useState } from "react";
+import type { Credit } from "~/types/types";
 
-type Credit = {
-    id: number;
-    cliente: string;
-    monto: number;
-    interes: number;
-    plazo: number;
-    cuota: number;
-    fechaInicio: string;
-    proximaFechaPago: string;
-};
-
-export default function CreditsPage() {
+export default function CreditsManagmentsPage() {
     const [credits, setCredits] = useState<Credit[]>([
         {
             id: 1,
@@ -48,12 +38,12 @@ export default function CreditsPage() {
             <div className="overflow-x-auto bg-white rounded-lg shadow">
                 <table className="w-full text-sm">
                     <thead className="bg-gray-100">
-                        <tr>
-                            <th className="p-3 bg-(--primary-500) text-(--neutral-50) text-left">Cliente</th>
-                            <th className="p-3 bg-(--primary-500) text-(--neutral-50) text-left">Monto</th>
-                            <th className="p-3 bg-(--primary-500) text-(--neutral-50) text-left">Cuota</th>
-                            <th className="p-3 bg-(--primary-500) text-(--neutral-50) text-left">Próximo pago</th>
-                            <th className="p-3 bg-(--primary-500) text-(--neutral-50) text-left">Acciones</th>
+                        <tr className="bg-(--primary-500) text-(--neutral-50)">
+                            <th className="p-3 text-left">Cliente</th>
+                            <th className="p-3 text-left">Monto</th>
+                            <th className="p-3 text-left">Cuota</th>
+                            <th className="p-3 text-left">Próximo pago</th>
+                            <th className="p-3 text-left">Acciones</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -82,20 +72,3 @@ export default function CreditsPage() {
     );
 }
 
-function calcularCredito(
-    monto: number,
-    interes: number,
-    plazo: number,
-    fechaInicio: string
-) {
-    const montoTotal = monto + monto * (interes / 100);
-    const cuota = +(montoTotal / plazo).toFixed(2);
-
-    const fechasPago = Array.from({ length: plazo }, (_, i) => {
-        const fecha = new Date(fechaInicio);
-        fecha.setMonth(fecha.getMonth() + i + 1);
-        return fecha.toISOString().split("T")[0];
-    });
-
-    return { cuota, fechasPago };
-}

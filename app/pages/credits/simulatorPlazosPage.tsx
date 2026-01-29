@@ -1,5 +1,7 @@
+import { PDFDownloadLink } from "@react-pdf/renderer";
 import { useState, useMemo } from "react";
-
+import { CreditSchedulePDF } from "./creditsimulatorPdf";
+import { formatCurrency } from "~/utils/formatos";
 export default function SimulatorPage() {
     const [monto, setMonto] = useState("0");
     const [plazo, setPlazo] = useState("12");
@@ -7,6 +9,10 @@ export default function SimulatorPage() {
     const [fechaInicio, setFechaInicio] = useState(
         new Date().toISOString().split("T")[0]
     );
+
+    const roundToHundred = (value: number): number => {
+        return Math.round(value / 100) * 100;
+    };
 
     const resultado = useMemo(() => {
         const montoNum = Number(monto) || 0;
@@ -16,8 +22,8 @@ export default function SimulatorPage() {
         // 🛑 Validación
         if (montoNum <= 0 || interesDecimal <= 0 || plazoNum <= 0) {
             return {
-                montoTotal: "0.00",
-                cuota: "0.00",
+                montoTotal: "0",
+                cuota: "0",
                 plazos: 0,
                 fechas: [],
                 detalle: [],
@@ -25,10 +31,11 @@ export default function SimulatorPage() {
             };
         }
 
-        // 📐 Cuota automática (sistema francés)
-        const cuota =
+        const cuotaBase =
             (montoNum * interesDecimal) /
             (1 - Math.pow(1 + interesDecimal, -plazoNum));
+
+        const cuota = roundToHundred(cuotaBase);
 
         let saldo = montoNum;
         let totalIntereses = 0;
@@ -38,10 +45,10 @@ export default function SimulatorPage() {
 
         for (let periodo = 1; periodo <= plazoNum; periodo++) {
             const interesPeriodo = saldo * interesDecimal;
-            let capitalPagado = cuota - interesPeriodo;
-            totalIntereses += interesPeriodo;
 
-            // 🔧 Ajuste último mes
+            let capitalPagado = cuota - interesPeriodo;
+
+            // 🛑 Última cuota: cerrar saldo exacto
             if (periodo === plazoNum) {
                 capitalPagado = saldo;
             }
@@ -49,13 +56,15 @@ export default function SimulatorPage() {
             const cuotaReal = capitalPagado + interesPeriodo;
             const saldoFinal = saldo - capitalPagado;
 
+            totalIntereses += interesPeriodo;
+
             detalle.push({
                 periodo,
-                saldoInicial: saldo.toFixed(2),
-                cuota: cuotaReal.toFixed(2),
-                interes: interesPeriodo.toFixed(2),
-                capital: capitalPagado.toFixed(2),
-                saldoFinal: Math.max(0, saldoFinal).toFixed(2),
+                saldoInicial: roundToHundred(saldo),
+                cuota: roundToHundred(cuotaReal),
+                interes: roundToHundred(interesPeriodo),
+                capital: roundToHundred(capitalPagado),
+                saldoFinal: Math.max(0, roundToHundred(saldoFinal)),
             });
 
             saldo = saldoFinal;
@@ -66,8 +75,8 @@ export default function SimulatorPage() {
         }
 
         return {
-            montoTotal: (montoNum + totalIntereses).toFixed(2),
-            cuota: cuota.toFixed(2),
+            montoTotal: roundToHundred(montoNum + totalIntereses),
+            cuota: cuota,
             plazos: plazoNum,
             fechas,
             detalle,
@@ -132,11 +141,15 @@ export default function SimulatorPage() {
                     <div className="bg-slate-50 p-6 rounded-xl border space-y-4">
                         <Result
                             label="Monto total a pagar"
-                            value={`$ ${resultado.montoTotal}`}
+                            value={` ${formatCurrency(Number(resultado.montoTotal))}`}
+                        />
+                        <Result
+                            label="Total de ganancias"
+                            value={` ${(formatCurrency(Number(resultado.montoTotal) - Number(monto)))}`}
                         />
                         <Result
                             label="Cuota mensual"
-                            value={`$ ${resultado.cuota}`}
+                            value={` ${formatCurrency(Number(resultado.cuota))}`}
                         />
                         <Result
                             label="Total de cuotas"
@@ -147,58 +160,80 @@ export default function SimulatorPage() {
             </section>
 
             {/* Tabla */}
-            <div className="bg-white rounded-xl shadow">
-                <div className="p-4 font-semibold">
-                    Calendario de pagos
+            <section className="bg-(--primary-100) rounded-xl shadow p-4">
+
+                <div className="flex justify-between items-center">
+                    <h1 className="p-4 font-bold text-xl"> Calendario de pagos </h1>
+                    <PDFDownloadLink className="bg-(--primary-500) hover:bg-(--primary-400) transition px-4 py-2 rounded-lg text-(--neutral-50)"
+                        key={JSON.stringify(resultado.detalle)}
+                        document={
+                            <CreditSchedulePDF
+                                resultado={resultado}
+                                montoInicial={+monto}
+                                interes={+interes}
+                                plazo={+plazo}
+                            />
+                        }
+                        fileName="calendario-pagos-credimotos.pdf"
+                    >
+                        {({ loading }) =>
+                            loading ? "Generando PDF..." : "Descargar PDF"
+                        }
+                    </PDFDownloadLink>
                 </div>
 
-                <table className="w-full text-sm">
-                    <thead className="bg-slate-100">
-                        <tr>
-                            <th className="p-3 text-left">#</th>
-                            <th className="p-3 text-left">Fecha</th>
-                            <th className="p-3 text-right">
-                                Saldo inicial
-                            </th>
-                            <th className="p-3 text-right">Cuota</th>
-                            <th className="p-3 text-right">Interés</th>
-                            <th className="p-3 text-right">
-                                Capital
-                            </th>
-                            <th className="p-3 text-right">
-                                Saldo final
-                            </th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {resultado.detalle.map((item, i) => (
-                            <tr key={i} className="border-t">
-                                <td className="p-3">
-                                    {item.periodo}
-                                </td>
-                                <td className="p-3">
-                                    {resultado.fechas[i]}
-                                </td>
-                                <td className="p-3 text-right">
-                                    $ {item.saldoInicial}
-                                </td>
-                                <td className="p-3 text-right">
-                                    $ {item.cuota}
-                                </td>
-                                <td className="p-3 text-right">
-                                    $ {item.interes}
-                                </td>
-                                <td className="p-3 text-right">
-                                    $ {item.capital}
-                                </td>
-                                <td className="p-3 text-right">
-                                    $ {item.saldoFinal}
-                                </td>
+                {/* CONTENEDOR de la tabla */}
+                <div className="rounded-lg overflow-hidden border bg-white">
+                    <table className="w-full text-sm">
+                        {/* HEADER */}
+                        <thead className="bg-(--primary-500) text-(--neutral-100)">
+                            <tr>
+                                <th className="p-3 text-left">Mes</th>
+                                <th className="p-3 text-left">Fecha</th>
+                                <th className="p-3 text-right">Saldo inicial</th>
+                                <th className="p-3 text-right">Pago de Interés</th>
+                                <th className="p-3 text-right">Pago de Capital</th>
+                                <th className="p-3 text-right">Cuota</th>
+                                <th className="p-3 text-right">Saldo pendiente</th>
                             </tr>
-                        ))}
-                    </tbody>
-                </table>
-            </div>
+                        </thead>
+
+                        {/* BODY */}
+                        <tbody>
+                            {resultado.detalle.map((item, i) => (
+                                <tr key={i} className={`${i % 2 === 0 ? "bg-(--primary-200)" : ""}`}>
+                                    <td className="p-3">{item.periodo}</td>
+                                    <td className="p-3">{resultado.fechas[i]}</td>
+                                    <td className="p-3 text-right">{formatCurrency(item.saldoInicial)}</td>
+                                    <td className="p-3 text-right">{formatCurrency(item.interes)}</td>
+                                    <td className="p-3 text-right">{formatCurrency(item.capital)}</td>
+                                    <td className="p-3 text-right">{formatCurrency(item.cuota)}</td>
+                                    <td className="p-3 text-right">{formatCurrency(item.saldoFinal)}</td>
+                                </tr>
+                            ))}
+
+                            {/* TOTALES */}
+                            <tr className="border-t bg-slate-50 font-semibold">
+                                <td colSpan={3} className="p-3 text-right">
+                                    Totales
+                                </td>
+                                <td className="p-3 text-right">
+                                    {formatCurrency(resultado.detalle.reduce((acc, i) => acc + Number(i.interes), 0))}
+                                </td>
+                                <td className="p-3 text-right">
+                                    {formatCurrency(resultado.detalle.reduce((acc, i) => acc + Number(i.capital), 0))}
+                                </td>
+                                <td className="p-3 text-right">
+                                    {formatCurrency(resultado.detalle.reduce((acc, i) => acc + Number(i.cuota), 0))}
+                                </td>
+                                <td className="p-3 text-right">$ 0</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+
         </div>
     );
 }

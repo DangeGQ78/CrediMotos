@@ -18,7 +18,7 @@ export default function DashboardPage() {
                 <Grid item xs={12} md={4}>
                     <MetricCard title="Créditos Activos" value="320" />
                 </Grid>
-                <Grid item xs={12} md={4}>
+                <Grid item md={4}>
                     <MetricCard title="Ingresos" value="$12,500" />
                 </Grid>
             </Grid>
