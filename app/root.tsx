@@ -11,6 +11,7 @@ import type { Route } from "./+types/root";
 import "./app.css";
 import "./assets/icons/icons"
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
+import { SnackbarProvider } from "./components/common/alert";
 
 export const links: Route.LinksFunction = () => [
   { rel: "preconnect", href: "https://fonts.googleapis.com" },
@@ -37,7 +38,9 @@ export function Layout({ children }: { children: React.ReactNode }) {
       </head>
       <body>
         <QueryClientProvider client={queryClient}>
-          {children}
+          <SnackbarProvider>
+            {children}
+          </SnackbarProvider>
         </QueryClientProvider>
         <ScrollRestoration />
         <Scripts />

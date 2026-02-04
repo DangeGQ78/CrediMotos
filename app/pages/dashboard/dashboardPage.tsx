@@ -12,13 +12,13 @@ export default function DashboardPage() {
 
             {/* Cards métricas */}
             <Grid container spacing={2} mb={3}>
-                <Grid item xs={12} md={4}>
+                <Grid  >
                     <MetricCard title="Usuarios" value="1,245" />
                 </Grid>
-                <Grid item xs={12} md={4}>
+                <Grid  >
                     <MetricCard title="Créditos Activos" value="320" />
                 </Grid>
-                <Grid item md={4}>
+                <Grid  >
                     <MetricCard title="Ingresos" value="$12,500" />
                 </Grid>
             </Grid>
@@ -26,7 +26,7 @@ export default function DashboardPage() {
             {/* Charts */}
             <Grid container spacing={3}>
                 {/* Line Chart */}
-                <Grid item xs={12} md={6}>
+                <Grid  >
                     <ChartCard title="Crecimiento Mensual">
                         <LineChart
                             xAxis={[{ data: ["Ene", "Feb", "Mar", "Abr", "May", "Jun"] }]}
@@ -42,7 +42,7 @@ export default function DashboardPage() {
                 </Grid>
 
                 {/* Bar Chart */}
-                <Grid item xs={12} md={6}>
+                <Grid >
                     <ChartCard title="Créditos por Mes">
                         <BarChart
                             xAxis={[{ data: ["Ene", "Feb", "Mar", "Abr", "May", "Jun"] }]}
@@ -58,7 +58,7 @@ export default function DashboardPage() {
                 </Grid>
 
                 {/* Pie Chart */}
-                <Grid item xs={12}>
+                <Grid >
                     <ChartCard title="Tipos de Crédito">
                         <PieChart
                             series={[

@@ -4,6 +4,13 @@ import { useState } from "react";
 import type { IconProp } from "@fortawesome/fontawesome-svg-core";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import logo from "../../assets/logo-Credimoto-removebg-preview.png";
+import {
+    faDashboard,
+    faCreditCard,
+    faDollar,
+    faUser
+} from "@fortawesome/free-solid-svg-icons";
+
 
 export default function AppLayout(): ReactElement {
     const location = useLocation();
@@ -13,7 +20,7 @@ export default function AppLayout(): ReactElement {
     const colorGeneral = "bg-(--primary-600)";
 
     return (
-        <div className="h-screen flex bg-(--primary-50)">
+        <div className="min-h-dvh flex bg-(--primary-50)">
             {/* Sidebar desktop */}
             <aside className="hidden md:flex md:flex-col w-64 bg-(--primary-600) border-r p-3 space-y-2">
                 {/* Logo */}
@@ -22,11 +29,11 @@ export default function AppLayout(): ReactElement {
                     alt="CrediMotos"
                     className="h-12 w-auto object-contain rounded-full p-1 bg-(--neutral-50)"
                 />
-                <MenuItem to="credimotos/dashboard" label="Dashboard" icon="dashboard" />
-                <MenuItem to="credimotos/clientes" label="Clientes" icon="user" />
-                <MenuItem to="credimotos/creditos" label="Créditos" icon="credit-card" />
-                <MenuItem to="credimotos/motos" label="Motos" icon="motorcycle" />
-                <MenuItem to="credimotos/productos" label="Electrodomésticos" icon="box-open" />
+                <MenuItem to="credimotos/dashboard" label="Dashboard" icon={faDashboard} />
+                <MenuItem to="credimotos/creditos" label="Créditos" icon={faCreditCard} />
+                <MenuItem to="credimotos/cuotas" label="Cuotas" icon={faDollar} />
+                <MenuItem to="credimotos/clientes" label="Clientes" icon={faUser} />
+
             </aside>
 
             {/* Sidebar mobile overlay */}
@@ -38,11 +45,10 @@ export default function AppLayout(): ReactElement {
                     />
                     <aside className={`absolute left-0 top-0 h-full w-64 ${colorGeneral} border-r flex flex-col shadow-lg p-3`}>
                         <button className="self-end p-2" onClick={() => setSidebarOpen(false)}>✕</button>
-                        <MenuItem to="credimotos/dashboard" label="Dashboard" icon="dashboard" onClickMobile={() => setSidebarOpen(false)} />
-                        <MenuItem to="credimotos/clientes" label="Clientes" icon="user" onClickMobile={() => setSidebarOpen(false)} />
-                        <MenuItem to="credimotos/creditos" label="Créditos" icon="credit-card" onClickMobile={() => setSidebarOpen(false)} />
-                        <MenuItem to="credimotos/motos" label="Motos" icon="motorcycle" onClickMobile={() => setSidebarOpen(false)} />
-                        <MenuItem to="credimotos/productos" label="Electrodomésticos" icon="box-open" onClickMobile={() => setSidebarOpen(false)} />
+                        <MenuItem to="credimotos/dashboard" label="Dashboard" icon={faDashboard} onClickMobile={() => setSidebarOpen(false)} />
+                        <MenuItem to="credimotos/creditos" label="Créditos" icon={faCreditCard} onClickMobile={() => setSidebarOpen(false)} />
+                        <MenuItem to="credimotos/cuotas" label="Cuotas" icon={faDollar} onClickMobile={() => setSidebarOpen(false)} />
+                        <MenuItem to="credimotos/clientes" label="Clientes" icon={faUser} onClickMobile={() => setSidebarOpen(false)} />
                     </aside>
                 </div>
             )}
@@ -70,7 +76,7 @@ export default function AppLayout(): ReactElement {
                 </header>
 
                 {/* Page content */}
-                <main className="flex-1 overflow-y-auto p-4 md:p-6 bg-amber-50">
+                <main className="flex-1 min-h-0 overflow-y-auto p-4 md:p-6 bg-amber-50">
                     <Outlet />
                 </main>
             </div>

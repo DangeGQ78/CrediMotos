@@ -7,8 +7,9 @@ export default [
             route("dashboard", "./pages/dashboard/dashboardPage.tsx"),
             route("creditos", "./pages/credits/creditsPage.tsx"),
             route("clientes", "./pages/clients/clientsPage.tsx"),
-            route("motos", "./pages/bikes/bikesPage.tsx"),
-            route("productos", "./pages/electronics/productsPage.tsx"),
+            route("cuotas", "./pages/quotas/cuotasPage.tsx"),
+
+
 
         ])
     ])

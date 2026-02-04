@@ -1,12 +1,22 @@
-import { Box, Tab, Tabs } from "@mui/material";
-import { useState } from "react";
-import type { Credit } from "~/types/types";
-import SimulatorPage from "./simulatorPlazosPage";
-import CreditsManagmentsPage from "./creditsManagmentsPage";
+import { Box, Tab, Tabs, Badge } from "@mui/material";
+import { useState, useEffect } from "react";
+import SimulatorPage from "./simulatorTab";
+import CreditsManagmentsPage from "./creditsManagTab";
+import { useOfertaCreditoStore } from "~/stores/ofertaCreditosStore";
+
 
 
 export default function CreditsPage() {
-    const [tab, setTab] = useState(0)
+    const [tab, setTab] = useState(0);
+    const { hasOferta } = useOfertaCreditoStore();
+
+    // 🔁 Si hay simulación → ir automáticamente a gestión
+    useEffect(() => {
+        if (hasOferta()) {
+            setTab(0);
+        }
+    }, [hasOferta]);
+
     return (
         <Box className="bg-white rounded-xl shadow">
             <Tabs
@@ -27,19 +37,25 @@ export default function CreditsPage() {
                     },
                 }}
             >
-                <Tab label="Gestion de Creditos" />
-                <Tab label="Simulador de Creditos" />
-                {/* <Tab label="PDF" /> */}
+                <Tab
+                    label={
+                        hasOferta() ? (
+                            <Badge color="success" variant="dot">
+                                Gestión de Créditos
+                            </Badge>
+                        ) : (
+                            "Gestión de Créditos"
+                        )
+                    }
+                />
+                <Tab label="Simulador de Créditos" />
             </Tabs>
-            <Box p={2}>
+
+            <Box p={3}>
                 {tab === 0 && <CreditsManagmentsPage />}
                 {tab === 1 && <SimulatorPage />}
-                {/* {tab === 2 && <CreditoPdf />} */}
+
             </Box>
         </Box>
     );
-
 }
-
-
-

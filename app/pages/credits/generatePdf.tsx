@@ -1,6 +1,7 @@
 import { Document, Page, Text, View, StyleSheet, Image } from "@react-pdf/renderer";
 import logo from "../../assets/logo-Credimoto-removebg-preview.png";
 import { formatCurrency } from "~/utils/formatos";
+import type { Cliente } from "~/types/types";
 
 const styles = StyleSheet.create({
     page: {
@@ -112,9 +113,10 @@ interface Props {
     montoInicial: number;
     interes: number;
     plazo: number;
+    cliente?: Cliente
 }
 
-export const CreditSchedulePDF = ({ resultado, montoInicial, interes, plazo }: Props) => {
+export const CreditSchedulePDF = ({ resultado, montoInicial, interes, plazo, cliente }: Props) => {
     const today = new Date().toLocaleDateString("es-CO");
 
     const totalInteres = resultado.detalle.reduce((acc, i) => acc + Number(i.interes), 0);
@@ -129,6 +131,25 @@ export const CreditSchedulePDF = ({ resultado, montoInicial, interes, plazo }: P
                     <Image src={logo} style={styles.logo} />
                     <Text style={styles.title}>Calendario de Pagos</Text>
                 </View>
+                {cliente && <View>
+                    <View style={styles.field}>
+                        <Text style={styles.label}>Titular</Text>
+                        <Text style={styles.value}>{cliente.nombre}</Text>
+                    </View>
+                    <View style={styles.field}>
+                        <Text style={styles.label}>Cedula</Text>
+                        <Text style={styles.value}>{cliente.cedula}</Text>
+                    </View>
+                    <View style={styles.field}>
+                        <Text style={styles.label}>Telefono</Text>
+                        <Text style={styles.value}>{cliente.telefono}</Text>
+                    </View>
+                    <View style={styles.field}>
+                        <Text style={styles.label}>Ciudad</Text>
+                        <Text style={styles.value}>{cliente.ciudad}</Text>
+                    </View>
+                </View>}
+
 
                 {/* Datos del crédito */}
                 <View style={styles.section}>

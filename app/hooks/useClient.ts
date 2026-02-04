@@ -1,61 +1,77 @@
 import { useQuery, useMutation, useQueryClient, type UseMutationResult } from "@tanstack/react-query";
 import { supabase } from "~/stores/supabase";
 import type { Cliente } from "~/types/types";
+import { useSnackbar } from "~/components/common/alert";
+import type { PostgrestError } from "@supabase/supabase-js";
 
-const sleep = (ms: any) => new Promise(resolve => setTimeout(resolve, ms));
+
+
+
 /// ===================
 /// READ - Obtener clientes
 /// ===================
-export function useClientes() {
+export function useClientes(search: string = "") {
 
-
-    // usarla
-    // 5 segundos
-
-    return useQuery<Cliente[], Error>({
-        queryKey: ["clientes"],
+    return useQuery<Cliente[], PostgrestError>({
+        queryKey: ["clientes", search],
         queryFn: async () => {
-            await sleep(5000);
-            const { data, error } = await supabase.from("clientes").select("*");
-            if (error) throw error;
-            return data!;
-        },
-        staleTime: 1000 * 60, // 1 minuto
-        refetchOnWindowFocus: false,
-    });
-}
+            let query = supabase.from("clientes").select("*");
 
-/// ===================
-/// CREATE - Crear cliente
-/// ===================
-export function useCrearCliente(): UseMutationResult<Cliente, Error, Cliente> {
-    const queryClient = useQueryClient();
+            if (search.trim()) {
+                query = query.or(
+                    `nombre.ilike.%${search}%`
+                );
+            }
 
-    return useMutation<Cliente, Error, Cliente>({
-        mutationFn: async (nuevoCliente) => {
-            const { data, error } = await supabase.from("clientes").insert(nuevoCliente).select().single();
+
+            const { data, error } = await query;
+
             if (error) {
                 console.log(error)
                 throw error;
             }
-            return data!;
+            return data ?? [];
         },
-        onSuccess: (nuevoCliente) => {
-            queryClient.setQueryData<Cliente[]>(["clientes"], (old) =>
-                old ? [...old, nuevoCliente] : [nuevoCliente]
-            );
+
+        enabled: search.length === 0 || search.length >= 2,
+        staleTime: 1000 * 60,
+        refetchOnWindowFocus: false,
+    });
+}
+
+
+/// ===================
+/// CREATE - Crear cliente
+/// ===================
+export function useCrearCliente() {
+    const queryClient = useQueryClient();
+    const { showSnackbar } = useSnackbar()
+    return useMutation({
+        mutationFn: async (nuevoCliente: Cliente) => {
+            const { data, error } = await supabase.from("clientes").insert(nuevoCliente).select().single();
+            if (error) throw error;
+            return data
         },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["clientes"] });
+
+            showSnackbar("Usuario creado correctamente", "success");
+        },
+        onError: (error: PostgrestError) => {
+            if (error.message.includes("duplicate"))
+                showSnackbar("El usuario ya existe", "error");
+        }
     });
 }
 
 /// ===================
 /// UPDATE - Actualizar cliente
 /// ===================
-export function useActualizarCliente(): UseMutationResult<Cliente[], Error, Cliente> {
+export function useActualizarCliente() {
     const queryClient = useQueryClient();
-
-    return useMutation<Cliente[], Error, Cliente>({
-        mutationFn: async (cliente) => {
+    const { showSnackbar } = useSnackbar()
+    return useMutation({
+        mutationFn: async (cliente: Cliente) => {
             const { data, error } = await supabase
                 .from("clientes")
                 .update(cliente)
@@ -63,20 +79,29 @@ export function useActualizarCliente(): UseMutationResult<Cliente[], Error, Clie
             if (error) throw error;
             return data!;
         },
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ["clientes"] });
+        onSuccess: (_data, cliente) => {
+            queryClient.setQueryData<Cliente[]>(["clientes"], (old = []) =>
+                old.map((c) =>
+                    c.cedula === cliente.cedula ? cliente : c
+                )
+            );
+            showSnackbar("Cliente actualizado correctamente", "success");
+
         },
+        onError: (error: PostgrestError) => {
+            showSnackbar(error.message, "error");
+        }
     });
 }
 
 /// ===================
 /// DELETE - Eliminar cliente
 /// ===================
-export function useEliminarCliente(): UseMutationResult<Number, Error, number> {
+export function useEliminarCliente() {
     const queryClient = useQueryClient();
-
-    return useMutation<Number, Error, number>({
-        mutationFn: async (cedula) => {
+    const { showSnackbar } = useSnackbar()
+    return useMutation({
+        mutationFn: async (cedula: Number) => {
             const { data, error } = await supabase
                 .from("clientes")
                 .delete()
@@ -84,9 +109,40 @@ export function useEliminarCliente(): UseMutationResult<Number, Error, number> {
             if (error) throw error;
             return data!;
         },
-        onSuccess: (cedulaEliminada) => {
+        onSuccess: (_data, cedulaEliminada) => {
+            showSnackbar("Usuario eliminado", "error");
             queryClient.setQueryData<Cliente[]>(["clientes"], (old) =>
                 old ? old.filter(c => Number(c.cedula) !== cedulaEliminada) : []);
+
         },
+        onError: (error: PostgrestError) => {
+            showSnackbar(error.message, "error");
+        }
+    });
+
+}
+
+export function useClientesFilter(search: string) {
+    return useQuery<Cliente[], PostgrestError>({
+        queryKey: ["clientes", search],
+        queryFn: async () => {
+            let query = supabase.from("clientes").select("*");
+
+            if (search.trim()) {
+                query = query.or(
+                    `nombre.ilike.%${search}%,
+                     cedula.ilike.%${search}%,
+                     email.ilike.%${search}%,
+                     telefono.ilike.%${search}%`
+                );
+            }
+
+            const { data, error } = await query;
+
+            if (error) throw error;
+            return data ?? [];
+        },
+
+        enabled: search.length === 0 || search.length >= 2,
     });
 }
